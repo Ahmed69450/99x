@@ -10,6 +10,7 @@ public class TtsSanitizer {
     private static final Pattern BOLD_ITALIC_PATTERN = Pattern.compile("\\*{1,3}([^*]+)\\*{1,3}");
     private static final Pattern LINK_PATTERN = Pattern.compile("\\[([^\\]]+)\\]\\([^)]+\\)");
     private static final Pattern DOLLAR_PATTERN = Pattern.compile("\\$(\\d+(\\.\\d+)?)");
+    private static final Pattern KM_PATTERN = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*km(?![a-zA-Z/])", Pattern.CASE_INSENSITIVE);
     private static final Pattern MULTIPLE_SPACES = Pattern.compile("\\s{2,}");
 
     public static String sanitize(String text) {
@@ -45,6 +46,9 @@ public class TtsSanitizer {
                        .replace("mph", " miles per hour")
                        .replace(" & ", " and ")
                        .replace("&", " and ");
+
+        // Distance unit expansion: 15km -> 15 kilometers
+        result = KM_PATTERN.matcher(result).replaceAll("$1 kilometers");
 
         // 8. Strip emojis and presentation selectors via code points
         result = stripEmojis(result);
