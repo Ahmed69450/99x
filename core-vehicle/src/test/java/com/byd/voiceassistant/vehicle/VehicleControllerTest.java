@@ -44,4 +44,16 @@ public class VehicleControllerTest {
         Assert.assertTrue(result.isSuccess());
         Assert.assertEquals(Integer.valueOf(100), controller.getCurrentState().getWindows().get(WindowPosition.FRONT_LEFT));
     }
+
+    @Test
+    public void testBydControllerClampsAndAdjustsTemperature() {
+        BYDVehicleController bydController = new BYDVehicleController(null);
+        CarExecutionResult res = bydController.execute(new VehicleAction.AdjustAcTemperature(2.0f));
+        Assert.assertTrue(res.isSuccess());
+        Assert.assertEquals(24.0f, bydController.getCurrentState().getCabinTemperature(), 0.01f);
+
+        CarExecutionResult outOfBounds = bydController.execute(new VehicleAction.SetAcTemperature(50.0f));
+        Assert.assertTrue(outOfBounds.isSuccess());
+        Assert.assertEquals(32.0f, bydController.getCurrentState().getCabinTemperature(), 0.01f);
+    }
 }

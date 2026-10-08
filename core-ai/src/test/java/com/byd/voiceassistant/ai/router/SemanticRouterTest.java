@@ -34,4 +34,24 @@ public class SemanticRouterTest {
         Assert.assertTrue(result.getConfidence() < 0.70f);
         Assert.assertNull(result.getAction());
     }
+
+    @Test
+    public void testInformationalTemperatureQueryDoesNotRoute() {
+        OnnxSemanticRouter router = new OnnxSemanticRouter();
+        SemanticRouterResult result = router.route("What was the temperature in Shenzhen yesterday? It was 25 degrees.");
+        Assert.assertFalse(result.isMatch());
+    }
+
+    @Test
+    public void testSeatHeatingAndFanSpeedRouting() {
+        OnnxSemanticRouter router = new OnnxSemanticRouter();
+        SemanticRouterResult seatResult = router.route("turn on driver seat heating");
+        Assert.assertTrue(seatResult.isMatch());
+        Assert.assertTrue(seatResult.getAction() instanceof VehicleAction.SetSeatHeating);
+
+        SemanticRouterResult fanResult = router.route("set fan speed to 4");
+        Assert.assertTrue(fanResult.isMatch());
+        Assert.assertTrue(fanResult.getAction() instanceof VehicleAction.SetFanSpeed);
+        Assert.assertEquals(4, ((VehicleAction.SetFanSpeed) fanResult.getAction()).getSpeed());
+    }
 }

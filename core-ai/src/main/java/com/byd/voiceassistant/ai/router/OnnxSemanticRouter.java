@@ -58,15 +58,33 @@ public class OnnxSemanticRouter implements SemanticRouter {
             }
         }
 
-        // If temperature was explicitly extracted and query mentions temperature or climate
-        if (extractedTemp > 0.0f && (normalizedQuery.contains("temp") || normalizedQuery.contains("deg") || normalizedQuery.contains("climate") || normalizedQuery.contains("ac"))) {
+        // Guard against informational question false-positives
+        boolean isInformationalQuestion = normalizedQuery.contains("what was") ||
+                                          normalizedQuery.contains("what is") ||
+                                          normalizedQuery.contains("yesterday") ||
+                                          normalizedQuery.contains("forecast") ||
+                                          normalizedQuery.contains("how was");
+
+        // If temperature was explicitly extracted and query is an active command for temperature/climate
+        boolean isTempCommand = (normalizedQuery.contains("set") ||
+                                normalizedQuery.contains("change") ||
+                                normalizedQuery.contains("adjust") ||
+                                normalizedQuery.contains("make")) &&
+                                (normalizedQuery.contains("temp") ||
+                                 normalizedQuery.contains("deg") ||
+                                 normalizedQuery.contains("climate") ||
+                                 normalizedQuery.contains("ac")) &&
+                                !normalizedQuery.contains("fan") &&
+                                !normalizedQuery.contains("seat");
+
+        if (extractedTemp > 0.0f && isTempCommand && !isInformationalQuestion) {
             bestScore = Math.max(bestScore, 0.95f);
             bestIntent = CarCommandCatalog.INTENT_AC_SET_TEMP;
         }
 
         // 3. Evaluate threshold
-        if (bestScore >= ROUTING_CONFIDENCE_THRESHOLD && bestIntent != null) {
-            VehicleAction action = mapIntentToAction(bestIntent, extractedTemp);
+        if (bestScore >= ROUTING_CONFIDENCE_THRESHOLD && bestIntent != null && !isInformationalQuestion) {
+            VehicleAction action = mapIntentToAction(bestIntent, extractedTemp, normalizedQuery);
             if (action != null) {
                 return SemanticRouterResult.match(action, bestScore);
             }
@@ -75,7 +93,7 @@ public class OnnxSemanticRouter implements SemanticRouter {
         return SemanticRouterResult.noMatch(bestScore);
     }
 
-    private VehicleAction mapIntentToAction(String intentId, float extractedTemp) {
+    private VehicleAction mapIntentToAction(String intentId, float extractedTemp, String query) {
         switch (intentId) {
             case CarCommandCatalog.INTENT_AC_ON:
                 return new VehicleAction.SetAcEnabled(true);
@@ -88,6 +106,18 @@ public class OnnxSemanticRouter implements SemanticRouter {
                 return new VehicleAction.AdjustAcTemperature(1.0f);
             case CarCommandCatalog.INTENT_AC_TEMP_DOWN:
                 return new VehicleAction.AdjustAcTemperature(-1.0f);
+            case CarCommandCatalog.INTENT_SEAT_HEATING:
+                SeatPosition seatPos = query.contains("passenger") ? SeatPosition.PASSENGER : SeatPosition.DRIVER;
+                return new VehicleAction.SetSeatHeating(seatPos, 2);
+            case CarCommandCatalog.INTENT_FAN_SPEED:
+                int speed = 3;
+                Matcher fanMatcher = Pattern.compile("(\\d+)").matcher(query);
+                if (fanMatcher.find()) {
+                    try {
+                        speed = Integer.parseInt(fanMatcher.group(1));
+                    } catch (NumberFormatException ignored) {}
+                }
+                return new VehicleAction.SetFanSpeed(speed);
             case CarCommandCatalog.INTENT_WINDOW_OPEN:
                 return new VehicleAction.SetWindowPosition(WindowPosition.ALL, 100);
             case CarCommandCatalog.INTENT_WINDOW_CLOSE:

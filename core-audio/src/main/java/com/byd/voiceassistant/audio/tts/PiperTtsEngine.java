@@ -6,14 +6,15 @@ public class PiperTtsEngine implements TtsEngine {
 
     private final String modelPath;
     private final TtsEngine fallbackEngine;
-    private boolean isNativeLoaded = false;
+    private static boolean isNativeLoaded = false;
     private long nativeHandle = 0;
 
     static {
         try {
             System.loadLibrary("piper-android");
+            isNativeLoaded = true;
         } catch (UnsatisfiedLinkError ignored) {
-            // Running in unit tests / JVM environment without .so
+            isNativeLoaded = false;
         }
     }
 

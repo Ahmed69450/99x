@@ -7,7 +7,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import com.byd.voiceassistant.R;
 import com.byd.voiceassistant.orchestrator.VoiceState;
 
 public class VoiceOverlayView extends LinearLayout {
@@ -29,12 +28,21 @@ public class VoiceOverlayView extends LinearLayout {
     }
 
     private void init(Context context) {
-        if (context != null) {
-            LayoutInflater.from(context).inflate(R.layout.view_voice_overlay, this, true);
-            tvVoiceState = findViewById(R.id.tvVoiceState);
-            tvTranscript = findViewById(R.id.tvTranscript);
-            tvAssistantResponse = findViewById(R.id.tvAssistantResponse);
-            btnDismiss = findViewById(R.id.btnDismissOverlay);
+        if (context != null && context.getResources() != null) {
+            String pkg = context.getPackageName();
+            int layoutId = context.getResources().getIdentifier("view_voice_overlay", "layout", pkg);
+            if (layoutId != 0) {
+                LayoutInflater.from(context).inflate(layoutId, this, true);
+                int stateId = context.getResources().getIdentifier("tvVoiceState", "id", pkg);
+                int transcriptId = context.getResources().getIdentifier("tvTranscript", "id", pkg);
+                int respId = context.getResources().getIdentifier("tvAssistantResponse", "id", pkg);
+                int dismissId = context.getResources().getIdentifier("btnDismissOverlay", "id", pkg);
+
+                tvVoiceState = findViewById(stateId);
+                tvTranscript = findViewById(transcriptId);
+                tvAssistantResponse = findViewById(respId);
+                btnDismiss = findViewById(dismissId);
+            }
 
             if (btnDismiss != null) {
                 btnDismiss.setOnClickListener(v -> {

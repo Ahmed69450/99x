@@ -5,6 +5,7 @@ import com.byd.voiceassistant.ai.llm.PromptTemplateBuilder;
 import com.byd.voiceassistant.ai.router.SemanticRouter;
 import com.byd.voiceassistant.ai.router.SemanticRouterResult;
 import com.byd.voiceassistant.ai.sanitizer.TtsSanitizer;
+import com.byd.voiceassistant.audio.tts.TtsEngine;
 import com.byd.voiceassistant.context.location.ContextSnapshot;
 import com.byd.voiceassistant.context.location.LocationTimeProvider;
 import com.byd.voiceassistant.context.memory.MemoryRetrievalService;
@@ -24,6 +25,7 @@ public class VoicePipelineOrchestrator {
     private final McpClientEngine mcpClient;
     private final LocationTimeProvider locationTimeProvider;
     private final MemoryRetrievalService memoryRetrievalService;
+    private final TtsEngine ttsEngine;
 
     private VoiceState currentState = VoiceState.IDLE;
     private String currentScreenContext = "";
@@ -37,12 +39,25 @@ public class VoicePipelineOrchestrator {
         LocationTimeProvider locationTimeProvider,
         MemoryRetrievalService memoryRetrievalService
     ) {
+        this(semanticRouter, vehicleController, llmEngine, mcpClient, locationTimeProvider, memoryRetrievalService, null);
+    }
+
+    public VoicePipelineOrchestrator(
+        SemanticRouter semanticRouter,
+        CarController vehicleController,
+        LlmEngine llmEngine,
+        McpClientEngine mcpClient,
+        LocationTimeProvider locationTimeProvider,
+        MemoryRetrievalService memoryRetrievalService,
+        TtsEngine ttsEngine
+    ) {
         this.semanticRouter = semanticRouter;
         this.vehicleController = vehicleController;
         this.llmEngine = llmEngine;
         this.mcpClient = mcpClient;
         this.locationTimeProvider = locationTimeProvider;
         this.memoryRetrievalService = memoryRetrievalService;
+        this.ttsEngine = ttsEngine;
     }
 
     public void addListener(VoicePipelineListener listener) {
@@ -93,6 +108,11 @@ public class VoicePipelineOrchestrator {
             transitionTo(VoiceState.SPEAKING);
             for (VoicePipelineListener l : listeners) {
                 l.onResponseGenerated(sanitizedResponse);
+            }
+            if (ttsEngine != null) {
+                try {
+                    ttsEngine.speak(sanitizedResponse);
+                } catch (Exception ignored) {}
             }
 
             transitionTo(VoiceState.IDLE);
@@ -160,6 +180,11 @@ public class VoicePipelineOrchestrator {
         transitionTo(VoiceState.SPEAKING);
         for (VoicePipelineListener l : listeners) {
             l.onResponseGenerated(sanitizedResponse);
+        }
+        if (ttsEngine != null) {
+            try {
+                ttsEngine.speak(sanitizedResponse);
+            } catch (Exception ignored) {}
         }
 
         transitionTo(VoiceState.IDLE);

@@ -33,6 +33,8 @@ public class CarCommandCatalog {
     public static final String INTENT_MEDIA_PAUSE = "media_pause";
     public static final String INTENT_MEDIA_NEXT = "media_next";
     public static final String INTENT_MEDIA_PREV = "media_previous";
+    public static final String INTENT_SEAT_HEATING = "seat_heating";
+    public static final String INTENT_FAN_SPEED = "fan_speed";
 
     public static List<CommandPrototype> getPrototypes() {
         List<CommandPrototype> list = new ArrayList<>();
@@ -79,6 +81,14 @@ public class CarCommandCatalog {
 
         list.add(new CommandPrototype(INTENT_MEDIA_PREV, Arrays.asList(
             "previous track", "previous song", "go back song"
+        )));
+
+        list.add(new CommandPrototype(INTENT_SEAT_HEATING, Arrays.asList(
+            "turn on driver seat heating", "driver seat heater", "warm up driver seat", "turn on seat heating", "passenger seat heating"
+        )));
+
+        list.add(new CommandPrototype(INTENT_FAN_SPEED, Arrays.asList(
+            "set fan speed to", "adjust fan speed", "blower speed to", "fan speed"
         )));
 
         return list;

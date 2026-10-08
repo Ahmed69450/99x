@@ -26,9 +26,15 @@ public class VoiceAccessibilityService extends AccessibilityService {
 
         AccessibilityNodeInfo root = getRootInActiveWindow();
         if (root != null) {
-            StringBuilder sb = new StringBuilder();
-            traverseNode(root, sb, 0);
-            updateScreenContext(packageName, sb.toString().trim());
+            try {
+                StringBuilder sb = new StringBuilder();
+                traverseNode(root, sb, 0);
+                updateScreenContext(packageName, sb.toString().trim());
+            } finally {
+                try {
+                    root.recycle();
+                } catch (Exception ignored) {}
+            }
         } else if (event.getText() != null && !event.getText().isEmpty()) {
             updateScreenContext(packageName, event.getText().toString());
         }
@@ -51,7 +57,13 @@ public class VoiceAccessibilityService extends AccessibilityService {
         for (int i = 0; i < node.getChildCount(); i++) {
             AccessibilityNodeInfo child = node.getChild(i);
             if (child != null) {
-                traverseNode(child, sb, depth + 1);
+                try {
+                    traverseNode(child, sb, depth + 1);
+                } finally {
+                    try {
+                        child.recycle();
+                    } catch (Exception ignored) {}
+                }
             }
         }
     }

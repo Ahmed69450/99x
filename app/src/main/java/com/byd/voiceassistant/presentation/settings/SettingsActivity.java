@@ -6,7 +6,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
-import com.byd.voiceassistant.R;
 import com.byd.voiceassistant.context.storage.ModelPreferencesDataStore;
 import com.byd.voiceassistant.service.VoiceForegroundService;
 
@@ -23,24 +22,33 @@ public class SettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_settings);
+        String pkg = getPackageName();
+        int layoutId = getResources() != null ? getResources().getIdentifier("activity_settings", "layout", pkg) : 0;
+        if (layoutId != 0) {
+            setContentView(layoutId);
+            int ggufTvId = getResources().getIdentifier("tvSelectedGguf", "id", pkg);
+            int piperTvId = getResources().getIdentifier("tvSelectedPiper", "id", pkg);
+            int statusTvId = getResources().getIdentifier("tvEngineStatus", "id", pkg);
+            int ggufBtnId = getResources().getIdentifier("btnSelectGguf", "id", pkg);
+            int piperBtnId = getResources().getIdentifier("btnSelectPiper", "id", pkg);
+
+            tvSelectedGguf = findViewById(ggufTvId);
+            tvSelectedPiper = findViewById(piperTvId);
+            tvEngineStatus = findViewById(statusTvId);
+
+            Button btnSelectGguf = findViewById(ggufBtnId);
+            if (btnSelectGguf != null) {
+                btnSelectGguf.setOnClickListener(v -> launchFilePicker("*/*", REQUEST_CODE_GGUF));
+            }
+
+            Button btnSelectPiper = findViewById(piperBtnId);
+            if (btnSelectPiper != null) {
+                btnSelectPiper.setOnClickListener(v -> launchFilePicker("*/*", REQUEST_CODE_PIPER));
+            }
+        }
 
         ModelPreferencesDataStore dataStore = new ModelPreferencesDataStore(this);
         viewModel = new SettingsViewModel(dataStore);
-
-        tvSelectedGguf = findViewById(R.id.tvSelectedGguf);
-        tvSelectedPiper = findViewById(R.id.tvSelectedPiper);
-        tvEngineStatus = findViewById(R.id.tvEngineStatus);
-
-        Button btnSelectGguf = findViewById(R.id.btnSelectGguf);
-        if (btnSelectGguf != null) {
-            btnSelectGguf.setOnClickListener(v -> launchFilePicker("*/*", REQUEST_CODE_GGUF));
-        }
-
-        Button btnSelectPiper = findViewById(R.id.btnSelectPiper);
-        if (btnSelectPiper != null) {
-            btnSelectPiper.setOnClickListener(v -> launchFilePicker("*/*", REQUEST_CODE_PIPER));
-        }
 
         updateUiFromViewModel();
 

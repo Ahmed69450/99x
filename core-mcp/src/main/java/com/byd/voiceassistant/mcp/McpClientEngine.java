@@ -1,11 +1,13 @@
 package com.byd.voiceassistant.mcp;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class McpClientEngine {
+
+    public static final long DEFAULT_TOOL_TIMEOUT_MS = 2000; // 2 seconds
 
     private static final Pattern TOOL_CALL_PATTERN = Pattern.compile(
         "\\[TOOL_CALL:\\s*([a-zA-Z0-9_-]+)\\s*(\\{.*?\\})\\]"
@@ -30,6 +32,7 @@ public class McpClientEngine {
     }
 
     private final Map<String, McpTool> tools = new ConcurrentHashMap<>();
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     public void registerTool(McpTool tool) {
         if (tool != null) {
@@ -41,8 +44,13 @@ public class McpClientEngine {
         if (toolName == null || !tools.containsKey(toolName)) {
             return ToolResult.error("Tool '" + toolName + "' is not registered.");
         }
+        McpTool tool = tools.get(toolName);
+        Future<ToolResult> future = executorService.submit(() -> tool.execute(paramsJson));
         try {
-            return tools.get(toolName).execute(paramsJson);
+            return future.get(DEFAULT_TOOL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            future.cancel(true);
+            return ToolResult.error("Tool '" + toolName + "' execution timed out after " + DEFAULT_TOOL_TIMEOUT_MS + "ms.");
         } catch (Exception e) {
             return ToolResult.error("Error executing tool '" + toolName + "': " + e.getMessage());
         }

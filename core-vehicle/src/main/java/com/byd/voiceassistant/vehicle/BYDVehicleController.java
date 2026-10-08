@@ -35,9 +35,17 @@ public class BYDVehicleController implements CarController {
 
         try {
             if (action instanceof VehicleAction.SetAcTemperature) {
-                float temp = ((VehicleAction.SetAcTemperature) action).getTargetCelsius();
+                float rawTemp = ((VehicleAction.SetAcTemperature) action).getTargetCelsius();
+                float clampedTemp = Math.max(SimulatedVehicleController.MIN_TEMP,
+                                    Math.min(SimulatedVehicleController.MAX_TEMP, rawTemp));
                 Intent intent = new Intent(ACTION_BYD_AC);
-                intent.putExtra("temperature", temp);
+                intent.putExtra("temperature", clampedTemp);
+                intent.putExtra("ac_switch", true);
+                context.sendBroadcast(intent);
+            } else if (action instanceof VehicleAction.AdjustAcTemperature) {
+                float newTemp = fallbackSimulation.getCurrentState().getCabinTemperature();
+                Intent intent = new Intent(ACTION_BYD_AC);
+                intent.putExtra("temperature", newTemp);
                 intent.putExtra("ac_switch", true);
                 context.sendBroadcast(intent);
             } else if (action instanceof VehicleAction.SetAcEnabled) {
@@ -46,21 +54,25 @@ public class BYDVehicleController implements CarController {
                 intent.putExtra("ac_switch", enabled);
                 context.sendBroadcast(intent);
             } else if (action instanceof VehicleAction.SetFanSpeed) {
-                int speed = ((VehicleAction.SetFanSpeed) action).getSpeed();
+                int rawSpeed = ((VehicleAction.SetFanSpeed) action).getSpeed();
+                int clampedSpeed = Math.max(SimulatedVehicleController.MIN_FAN,
+                                   Math.min(SimulatedVehicleController.MAX_FAN, rawSpeed));
                 Intent intent = new Intent(ACTION_BYD_AC);
-                intent.putExtra("fan_speed", speed);
+                intent.putExtra("fan_speed", clampedSpeed);
                 context.sendBroadcast(intent);
             } else if (action instanceof VehicleAction.SetWindowPosition) {
                 VehicleAction.SetWindowPosition win = (VehicleAction.SetWindowPosition) action;
+                int clampedOpen = Math.max(0, Math.min(100, win.getOpenPercent()));
                 Intent intent = new Intent(ACTION_BYD_WINDOW);
                 intent.putExtra("window_type", win.getPosition().name());
-                intent.putExtra("open_percent", win.getOpenPercent());
+                intent.putExtra("open_percent", clampedOpen);
                 context.sendBroadcast(intent);
             } else if (action instanceof VehicleAction.SetSeatHeating) {
                 VehicleAction.SetSeatHeating seat = (VehicleAction.SetSeatHeating) action;
+                int clampedLevel = Math.max(0, Math.min(SimulatedVehicleController.MAX_SEAT_LEVEL, seat.getLevel()));
                 Intent intent = new Intent(ACTION_BYD_SEAT);
                 intent.putExtra("seat_position", seat.getPosition().name());
-                intent.putExtra("level", seat.getLevel());
+                intent.putExtra("level", clampedLevel);
                 context.sendBroadcast(intent);
             } else if (action instanceof VehicleAction.MediaPlay) {
                 dispatchMediaKey(KeyEvent.KEYCODE_MEDIA_PLAY);

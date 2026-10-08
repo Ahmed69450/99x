@@ -25,4 +25,10 @@ public class LlamaCppEngineTest {
         Assert.assertNotNull(response);
         Assert.assertFalse(response.trim().isEmpty());
     }
+
+    @Test
+    public void testLoadModelNonExistentFails() {
+        LlamaCppEngine engine = new LlamaCppEngine();
+        Assert.assertFalse(engine.loadModel("/invalid/nonexistent/model.gguf"));
+    }
 }

@@ -13,10 +13,12 @@ public class LocationTimeProvider {
 
     private static final DateTimeFormatter TIME_FORMATTER =
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss, EEEE", Locale.US);
+    public static final long CACHE_TTL_MS = 10000; // 10 seconds TTL for vehicle motion
 
     private final Context context;
     private final Clock clock;
     private LocationData cachedLocation;
+    private long lastLocationFetchTime = 0;
 
     public LocationTimeProvider(Context context) {
         this(context, Clock.systemDefaultZone());
@@ -45,12 +47,13 @@ public class LocationTimeProvider {
     }
 
     private LocationData fetchSystemLocation() {
-        if (cachedLocation != null) {
+        long now = System.currentTimeMillis();
+        if (cachedLocation != null && (now - lastLocationFetchTime) < CACHE_TTL_MS) {
             return cachedLocation;
         }
 
         if (context == null) {
-            return null;
+            return cachedLocation;
         }
 
         try {
@@ -67,6 +70,7 @@ public class LocationTimeProvider {
                         lastKnown.getLongitude(),
                         "AutoLocality"
                     );
+                    lastLocationFetchTime = now;
                     return cachedLocation;
                 }
             }
@@ -75,6 +79,6 @@ public class LocationTimeProvider {
         } catch (Exception ignored) {
         }
 
-        return null;
+        return cachedLocation;
     }
 }

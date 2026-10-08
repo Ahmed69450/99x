@@ -9,14 +9,15 @@ public class LlamaCppEngine implements LlmEngine {
 
     private int threadCount = DEFAULT_THREADS;
     private long nativeHandle = 0;
-    private boolean isNativeLoaded = false;
+    private static boolean isNativeLoaded = false;
     private String loadedModelPath = null;
 
     static {
         try {
             System.loadLibrary("llama-android");
+            isNativeLoaded = true;
         } catch (UnsatisfiedLinkError ignored) {
-            // Running on host JVM / tests without native .so
+            isNativeLoaded = false;
         }
     }
 
@@ -26,6 +27,15 @@ public class LlamaCppEngine implements LlmEngine {
 
     @Override
     public synchronized boolean loadModel(String modelPath) {
+        if (modelPath == null || modelPath.trim().isEmpty()) {
+            return false;
+        }
+
+        java.io.File file = new java.io.File(modelPath);
+        if (!file.exists()) {
+            return false;
+        }
+
         this.loadedModelPath = modelPath;
         if (isNativeLoaded) {
             try {
@@ -39,7 +49,7 @@ public class LlamaCppEngine implements LlmEngine {
                 return false;
             }
         }
-        return modelPath != null && !modelPath.trim().isEmpty();
+        return true;
     }
 
     @Override

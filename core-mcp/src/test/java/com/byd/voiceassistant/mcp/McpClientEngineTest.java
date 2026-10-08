@@ -45,4 +45,28 @@ public class McpClientEngineTest {
         Assert.assertEquals("web_search", parsed.getToolName());
         Assert.assertTrue(parsed.getArgumentsJson().contains("BYD Seal specs"));
     }
+
+    @Test
+    public void testToolExecutionTimeout() {
+        McpClientEngine engine = new McpClientEngine();
+        engine.registerTool(new McpTool() {
+            @Override public String getName() { return "hanging_tool"; }
+            @Override public String getDescription() { return "Simulates hung network"; }
+            @Override public String getSchemaJson() { return "{}"; }
+            @Override public ToolResult execute(String paramsJson) {
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException ignored) {}
+                return ToolResult.success("Done");
+            }
+        });
+
+        long start = System.currentTimeMillis();
+        ToolResult result = engine.executeTool("hanging_tool", "{}");
+        long duration = System.currentTimeMillis() - start;
+
+        Assert.assertFalse(result.isSuccess());
+        Assert.assertTrue(result.getContent().contains("timed out"));
+        Assert.assertTrue("Should time out around 2 seconds, but took: " + duration, duration < 3500);
+    }
 }
