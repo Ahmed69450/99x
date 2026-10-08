@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.byd.voiceassistant">
 
     <!-- Audio & Microphone permissions for hands-free wake word and Vosk STT -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -45,8 +46,7 @@
         <!-- Continuous Wake Word Foreground Service -->
         <service
             android:name=".service.VoiceForegroundService"
-            android:exported="false"
-            android:foregroundServiceType="microphone" />
+            android:exported="false" />
 
         <!-- Screen Awareness Accessibility Service -->
         <service
